@@ -6,10 +6,12 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SwitchCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckedTextView;
+import android.widget.CompoundButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,8 +19,12 @@ import java.util.List;
 public class ReorderDisplayNameFragment extends Fragment {
 
     private RecyclerView mDisplayNameRecyclerView;
+    private DisplayNameAdapter mDisplayNameAdapter;
 
-    private List<String> queryDisplayNames = new ArrayList<>();
+    private SwitchCompat mSwitchCompat;
+
+    private List<String> mQueryDisplayNames = new ArrayList<>();
+    private List<String> mCheckedDisplayNames = new ArrayList<>();
 
     public static ReorderDisplayNameFragment newInstance() {
         return new ReorderDisplayNameFragment();
@@ -39,10 +45,25 @@ public class ReorderDisplayNameFragment extends Fragment {
                 view.findViewById(R.id.display_name_recycler_view);
         mDisplayNameRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        queryDisplayNames.add("haha");
-        queryDisplayNames.add("hehe");
+        mQueryDisplayNames.add("haha");
+        mQueryDisplayNames.add("hehe");
 
-        mDisplayNameRecyclerView.setAdapter(new DisplayNameAdapter(queryDisplayNames));
+        mDisplayNameAdapter = new DisplayNameAdapter(mQueryDisplayNames);
+
+        mDisplayNameRecyclerView.setAdapter(mDisplayNameAdapter);
+
+        mSwitchCompat = (SwitchCompat) view.findViewById(R.id.select_reject_all_switch);
+        mSwitchCompat.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                boolean checked = mSwitchCompat.isChecked();
+                for (int i = 0; i < mDisplayNameAdapter.getItemCount(); i++) {
+                    DisplayNameHolder holder = (DisplayNameHolder)
+                            mDisplayNameRecyclerView.findViewHolderForAdapterPosition(i);
+                    holder.setChecked(checked);
+                }
+            }
+        });
 
         return view;
     }
@@ -64,6 +85,22 @@ public class ReorderDisplayNameFragment extends Fragment {
             mChecked = false;
             mDisplayNameCheckedTextView.setText(mDisplayName);
             mDisplayNameCheckedTextView.setChecked(mChecked);
+
+            mDisplayNameCheckedTextView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    setChecked(!mDisplayNameCheckedTextView.isChecked());
+                }
+            });
+        }
+
+        public void setChecked(boolean checked) {
+            mDisplayNameCheckedTextView.setChecked(checked);
+            if (checked) {
+                mCheckedDisplayNames.add(mDisplayName);
+            } else {
+                mCheckedDisplayNames.remove(mDisplayName);
+            }
         }
     }
 
