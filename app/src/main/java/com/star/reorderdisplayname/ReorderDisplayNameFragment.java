@@ -10,6 +10,7 @@ import android.support.v7.widget.SwitchCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.CompoundButton;
 
@@ -22,6 +23,9 @@ public class ReorderDisplayNameFragment extends Fragment {
     private DisplayNameAdapter mDisplayNameAdapter;
 
     private SwitchCompat mSwitchCompat;
+
+    private Button mQueryButton;
+    private Button mUpdateButton;
 
     private List<String> mQueryDisplayNames = new ArrayList<>();
     private List<String> mCheckedDisplayNames = new ArrayList<>();
@@ -62,6 +66,22 @@ public class ReorderDisplayNameFragment extends Fragment {
                             mDisplayNameRecyclerView.findViewHolderForAdapterPosition(i);
                     holder.setChecked(checked);
                 }
+            }
+        });
+
+        mQueryButton = (Button) view.findViewById(R.id.query_button);
+        mQueryButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+
+        mUpdateButton = (Button) view.findViewById(R.id.update_button);
+        mUpdateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
             }
         });
 
