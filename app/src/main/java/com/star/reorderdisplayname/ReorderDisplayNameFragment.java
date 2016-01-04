@@ -1,7 +1,11 @@
 package com.star.reorderdisplayname;
 
 
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -73,7 +77,7 @@ public class ReorderDisplayNameFragment extends Fragment {
         mQueryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                new QueryContactsTask().execute();
             }
         });
 
@@ -150,6 +154,49 @@ public class ReorderDisplayNameFragment extends Fragment {
         @Override
         public int getItemCount() {
             return mDisplayNames.size();
+        }
+    }
+
+    private class QueryContactsTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+
+            mQueryDisplayNames.clear();
+
+            Uri contactUri = ContactsContract.Contacts.CONTENT_URI;
+            String[] columns = new String[] {
+                    ContactsContract.Contacts.DISPLAY_NAME
+            };
+
+            Cursor contactsCursor = getActivity().getContentResolver().query(
+                    contactUri, columns, null, null, null
+            );
+
+            if (contactsCursor == null) {
+                return null;
+            }
+
+            try {
+                while (contactsCursor.moveToNext()) {
+                    String displayName = contactsCursor.getString(
+                            contactsCursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+
+                    if (displayName.contains(" ")) {
+                        mQueryDisplayNames.add(displayName);
+                    }
+
+                }
+            } finally {
+                contactsCursor.close();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            mDisplayNameAdapter.notifyDataSetChanged();
         }
     }
 }
