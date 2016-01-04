@@ -1,9 +1,11 @@
 package com.star.reorderdisplayname;
 
 
+import android.annotation.TargetApi;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
@@ -32,6 +34,8 @@ public class ReorderDisplayNameFragment extends Fragment {
     private Button mUpdateButton;
 
     private List<String> mQueryDisplayNames = new ArrayList<>();
+    private List<Boolean> mQueryDisplayNamesChecked = new ArrayList<>();
+
     private List<String> mCheckedDisplayNames = new ArrayList<>();
 
     public static ReorderDisplayNameFragment newInstance() {
@@ -53,22 +57,20 @@ public class ReorderDisplayNameFragment extends Fragment {
                 view.findViewById(R.id.display_name_recycler_view);
         mDisplayNameRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        mQueryDisplayNames.add("haha");
-        mQueryDisplayNames.add("hehe");
-
-        mDisplayNameAdapter = new DisplayNameAdapter(mQueryDisplayNames);
-
-        mDisplayNameRecyclerView.setAdapter(mDisplayNameAdapter);
-
         mSwitchCompat = (SwitchCompat) view.findViewById(R.id.select_reject_all_switch);
         mSwitchCompat.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 boolean checked = mSwitchCompat.isChecked();
-                for (int i = 0; i < mDisplayNameAdapter.getItemCount(); i++) {
-                    DisplayNameHolder holder = (DisplayNameHolder)
-                            mDisplayNameRecyclerView.findViewHolderForAdapterPosition(i);
-                    holder.setChecked(checked);
+                for (int i = 0; i < mQueryDisplayNamesChecked.size(); i++) {
+                    mQueryDisplayNamesChecked.set(i, checked);
+                }
+                mDisplayNameAdapter = new DisplayNameAdapter(
+                        mQueryDisplayNames, mQueryDisplayNamesChecked);
+                mDisplayNameRecyclerView.setAdapter(mDisplayNameAdapter);
+                mCheckedDisplayNames.clear();
+                if (checked) {
+                    mCheckedDisplayNames.addAll(mQueryDisplayNames);
                 }
             }
         });
@@ -104,9 +106,9 @@ public class ReorderDisplayNameFragment extends Fragment {
             mDisplayNameCheckedTextView = (CheckedTextView) itemView;
         }
 
-        public void bindDisplayName(String displayName) {
+        public void bindDisplayName(String displayName, boolean checked) {
             mDisplayName = displayName;
-            mChecked = false;
+            mChecked = checked;
             mDisplayNameCheckedTextView.setText(mDisplayName);
             mDisplayNameCheckedTextView.setChecked(mChecked);
 
@@ -118,22 +120,30 @@ public class ReorderDisplayNameFragment extends Fragment {
             });
         }
 
-        public void setChecked(boolean checked) {
-            mDisplayNameCheckedTextView.setChecked(checked);
+        @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+        private void setChecked(boolean checked) {
             if (checked) {
-                mCheckedDisplayNames.add(mDisplayName);
+                if (!mCheckedDisplayNames.contains(mDisplayName)) {
+                    mCheckedDisplayNames.add(mDisplayName);
+                }
             } else {
                 mCheckedDisplayNames.remove(mDisplayName);
             }
+            mQueryDisplayNamesChecked.set(getAdapterPosition(), checked);
+            mDisplayNameAdapter = new DisplayNameAdapter(
+                    mQueryDisplayNames, mQueryDisplayNamesChecked);
+            mDisplayNameRecyclerView.setAdapter(mDisplayNameAdapter);
         }
     }
 
     private class DisplayNameAdapter extends RecyclerView.Adapter<DisplayNameHolder> {
 
         private List<String> mDisplayNames;
+        private List<Boolean> mDisplayNamesChecked;
 
-        public DisplayNameAdapter(List<String> displayNames) {
+        public DisplayNameAdapter(List<String> displayNames, List<Boolean> displayNamesChecked) {
             mDisplayNames = displayNames;
+            mDisplayNamesChecked = displayNamesChecked;
         }
 
         @Override
@@ -148,7 +158,8 @@ public class ReorderDisplayNameFragment extends Fragment {
         @Override
         public void onBindViewHolder(DisplayNameHolder holder, int position) {
             String displayName = mDisplayNames.get(position);
-            holder.bindDisplayName(displayName);
+            boolean displayNameChecked = mDisplayNamesChecked.get(position);
+            holder.bindDisplayName(displayName, displayNameChecked);
         }
 
         @Override
@@ -163,6 +174,7 @@ public class ReorderDisplayNameFragment extends Fragment {
         protected Void doInBackground(Void... params) {
 
             mQueryDisplayNames.clear();
+            mQueryDisplayNamesChecked.clear();
 
             Uri contactUri = ContactsContract.Contacts.CONTENT_URI;
             String[] columns = new String[] {
@@ -184,6 +196,7 @@ public class ReorderDisplayNameFragment extends Fragment {
 
                     if (displayName.contains(" ")) {
                         mQueryDisplayNames.add(displayName);
+                        mQueryDisplayNamesChecked.add(false);
                     }
 
                 }
@@ -196,7 +209,9 @@ public class ReorderDisplayNameFragment extends Fragment {
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            mDisplayNameAdapter.notifyDataSetChanged();
+            mDisplayNameAdapter = new DisplayNameAdapter(
+                    mQueryDisplayNames, mQueryDisplayNamesChecked);
+            mDisplayNameRecyclerView.setAdapter(mDisplayNameAdapter);
         }
     }
 }
