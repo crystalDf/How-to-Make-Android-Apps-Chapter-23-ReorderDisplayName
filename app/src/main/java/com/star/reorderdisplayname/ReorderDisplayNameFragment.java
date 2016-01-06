@@ -1,11 +1,9 @@
 package com.star.reorderdisplayname;
 
 
-import android.annotation.TargetApi;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
@@ -33,9 +31,6 @@ public class ReorderDisplayNameFragment extends Fragment {
     private Button mQueryButton;
     private Button mUpdateButton;
 
-    private List<String> mQueryDisplayNames = new ArrayList<>();
-    private List<Boolean> mQueryDisplayNamesChecked = new ArrayList<>();
-
     private List<String> mCheckedDisplayNames = new ArrayList<>();
 
     public static ReorderDisplayNameFragment newInstance() {
@@ -62,15 +57,15 @@ public class ReorderDisplayNameFragment extends Fragment {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 boolean checked = mSwitchCompat.isChecked();
-                for (int i = 0; i < mQueryDisplayNamesChecked.size(); i++) {
-                    mQueryDisplayNamesChecked.set(i, checked);
+                List<Boolean> displayNamesChecked = mDisplayNameAdapter.getDisplayNamesChecked();
+                for (int i = 0; i < displayNamesChecked.size(); i++) {
+                    displayNamesChecked.set(i, checked);
                 }
-                mDisplayNameAdapter = new DisplayNameAdapter(
-                        mQueryDisplayNames, mQueryDisplayNamesChecked);
-                mDisplayNameRecyclerView.setAdapter(mDisplayNameAdapter);
+                mDisplayNameAdapter.notifyDataSetChanged();
+
                 mCheckedDisplayNames.clear();
                 if (checked) {
-                    mCheckedDisplayNames.addAll(mQueryDisplayNames);
+                    mCheckedDisplayNames.addAll(mDisplayNameAdapter.getDisplayNames());
                 }
             }
         });
@@ -120,8 +115,10 @@ public class ReorderDisplayNameFragment extends Fragment {
             });
         }
 
-        @TargetApi(Build.VERSION_CODES.HONEYCOMB)
         private void setChecked(boolean checked) {
+            mDisplayNameAdapter.getDisplayNamesChecked().set(getAdapterPosition(), checked);
+            mDisplayNameAdapter.notifyItemChanged(getAdapterPosition());
+
             if (checked) {
                 if (!mCheckedDisplayNames.contains(mDisplayName)) {
                     mCheckedDisplayNames.add(mDisplayName);
@@ -129,10 +126,6 @@ public class ReorderDisplayNameFragment extends Fragment {
             } else {
                 mCheckedDisplayNames.remove(mDisplayName);
             }
-            mQueryDisplayNamesChecked.set(getAdapterPosition(), checked);
-            mDisplayNameAdapter = new DisplayNameAdapter(
-                    mQueryDisplayNames, mQueryDisplayNamesChecked);
-            mDisplayNameRecyclerView.setAdapter(mDisplayNameAdapter);
         }
     }
 
@@ -144,6 +137,14 @@ public class ReorderDisplayNameFragment extends Fragment {
         public DisplayNameAdapter(List<String> displayNames, List<Boolean> displayNamesChecked) {
             mDisplayNames = displayNames;
             mDisplayNamesChecked = displayNamesChecked;
+        }
+
+        public List<String> getDisplayNames() {
+            return mDisplayNames;
+        }
+
+        public List<Boolean> getDisplayNamesChecked() {
+            return mDisplayNamesChecked;
         }
 
         @Override
@@ -169,6 +170,9 @@ public class ReorderDisplayNameFragment extends Fragment {
     }
 
     private class QueryContactsTask extends AsyncTask<Void, Void, Void> {
+
+        private List<String> mQueryDisplayNames = new ArrayList<>();
+        private List<Boolean> mQueryDisplayNamesChecked = new ArrayList<>();
 
         @Override
         protected Void doInBackground(Void... params) {
