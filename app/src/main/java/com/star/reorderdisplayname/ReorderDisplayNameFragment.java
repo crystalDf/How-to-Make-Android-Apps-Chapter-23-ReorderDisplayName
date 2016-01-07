@@ -15,6 +15,7 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SwitchCompat;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -86,7 +87,7 @@ public class ReorderDisplayNameFragment extends Fragment {
         mUpdateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                new UpdateContactsTask().execute(mCheckedDisplayNames);
             }
         });
 
@@ -223,12 +224,16 @@ public class ReorderDisplayNameFragment extends Fragment {
         }
     }
 
-    private class UpdateContactsTask extends AsyncTask<List<String>, Void, Void> {
+    private class UpdateContactsTask extends AsyncTask<List<String>, String, Void> {
 
         private List<String> mUpdateDisplayNames = new ArrayList<>();
 
         @Override
         protected Void doInBackground(List<String>... params) {
+
+            if (params == null) {
+                return null;
+            }
 
             mUpdateDisplayNames = params[0];
 
@@ -236,7 +241,6 @@ public class ReorderDisplayNameFragment extends Fragment {
                 Uri dataUri = ContactsContract.Data.CONTENT_URI;
                 String[] columns = new String[] {
                         ContactsContract.CommonDataKinds.StructuredName.CONTACT_ID,
-                        ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME,
                         ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME,
                         ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME,
                         ContactsContract.CommonDataKinds.StructuredName.MIDDLE_NAME
@@ -270,6 +274,10 @@ public class ReorderDisplayNameFragment extends Fragment {
                         String middleName = dataCursor.getString(dataCursor.getColumnIndex(
                                 ContactsContract.CommonDataKinds.StructuredName.MIDDLE_NAME));
 
+                        givenName = TextUtils.isEmpty(givenName) ? "" : givenName;
+                        familyName = TextUtils.isEmpty(familyName) ? "" : familyName;
+                        middleName = TextUtils.isEmpty(middleName) ? "" : middleName;
+
                         ArrayList<ContentProviderOperation> contentProviderOperationList =
                                 new ArrayList<>();
 
@@ -282,10 +290,17 @@ public class ReorderDisplayNameFragment extends Fragment {
                                 ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE
                         };
 
+                        String newDisplayName = familyName + middleName + givenName;
                         ContentValues contentValues = new ContentValues();
                         contentValues.put(
-                                ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME,
-                                familyName + middleName + givenName);
+                                ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME,
+                                newDisplayName);
+                        contentValues.put(
+                                ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME,
+                                "");
+                        contentValues.put(
+                                ContactsContract.CommonDataKinds.StructuredName.MIDDLE_NAME,
+                                "");
 
                         contentProviderOperationList.add(ContentProviderOperation
                                         .newUpdate(dataUri)
@@ -297,6 +312,8 @@ public class ReorderDisplayNameFragment extends Fragment {
                         try {
                             getActivity().getContentResolver().applyBatch(
                                     ContactsContract.AUTHORITY, contentProviderOperationList);
+                            publishProgress(displayName, newDisplayName);
+
                         } catch (RemoteException e) {
                             e.printStackTrace();
                         } catch (OperationApplicationException e) {
@@ -310,6 +327,18 @@ public class ReorderDisplayNameFragment extends Fragment {
             }
 
             return null;
+        }
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+            String displayName = values[0];
+            String newDisplayName = values[1];
+
+            List<String> displayNames = mDisplayNameAdapter.getDisplayNames();
+            int position = displayNames.indexOf(displayName);
+
+            displayNames.set(position, newDisplayName);
+            mDisplayNameAdapter.notifyItemChanged(position);
         }
     }
 }
