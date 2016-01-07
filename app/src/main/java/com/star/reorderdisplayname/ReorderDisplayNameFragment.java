@@ -1,10 +1,14 @@
 package com.star.reorderdisplayname;
 
 
+import android.content.ContentProviderOperation;
+import android.content.ContentValues;
+import android.content.OperationApplicationException;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -180,13 +184,13 @@ public class ReorderDisplayNameFragment extends Fragment {
             mQueryDisplayNames.clear();
             mQueryDisplayNamesChecked.clear();
 
-            Uri contactUri = ContactsContract.Contacts.CONTENT_URI;
+            Uri contactsUri = ContactsContract.Contacts.CONTENT_URI;
             String[] columns = new String[] {
                     ContactsContract.Contacts.DISPLAY_NAME
             };
 
             Cursor contactsCursor = getActivity().getContentResolver().query(
-                    contactUri, columns, null, null, null
+                    contactsUri, columns, null, null, null
             );
 
             if (contactsCursor == null) {
@@ -216,6 +220,96 @@ public class ReorderDisplayNameFragment extends Fragment {
             mDisplayNameAdapter = new DisplayNameAdapter(
                     mQueryDisplayNames, mQueryDisplayNamesChecked);
             mDisplayNameRecyclerView.setAdapter(mDisplayNameAdapter);
+        }
+    }
+
+    private class UpdateContactsTask extends AsyncTask<List<String>, Void, Void> {
+
+        private List<String> mUpdateDisplayNames = new ArrayList<>();
+
+        @Override
+        protected Void doInBackground(List<String>... params) {
+
+            mUpdateDisplayNames = params[0];
+
+            for (String displayName : mUpdateDisplayNames) {
+                Uri dataUri = ContactsContract.Data.CONTENT_URI;
+                String[] columns = new String[] {
+                        ContactsContract.CommonDataKinds.StructuredName.CONTACT_ID,
+                        ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME,
+                        ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME,
+                        ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME,
+                        ContactsContract.CommonDataKinds.StructuredName.MIDDLE_NAME
+                };
+
+                String whereClause = ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME
+                        + " = ?" + " AND "
+                        + ContactsContract.Data.MIMETYPE
+                        + " = ?";
+                String[] whereArgs = new String[] {
+                        displayName,
+                        ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE
+                };
+
+                Cursor dataCursor = getActivity().getContentResolver().query(
+                        dataUri, columns, whereClause, whereArgs, null
+                );
+
+                if (dataCursor == null) {
+                    return null;
+                }
+
+                try {
+                    while (dataCursor.moveToNext()) {
+                        String contactId = dataCursor.getString(dataCursor.getColumnIndex(
+                                ContactsContract.CommonDataKinds.StructuredName.CONTACT_ID));
+                        String givenName = dataCursor.getString(dataCursor.getColumnIndex(
+                                ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME));
+                        String familyName = dataCursor.getString(dataCursor.getColumnIndex(
+                                ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME));
+                        String middleName = dataCursor.getString(dataCursor.getColumnIndex(
+                                ContactsContract.CommonDataKinds.StructuredName.MIDDLE_NAME));
+
+                        ArrayList<ContentProviderOperation> contentProviderOperationList =
+                                new ArrayList<>();
+
+                        whereClause = ContactsContract.CommonDataKinds.StructuredName.CONTACT_ID
+                                + " = ?" + " AND "
+                                + ContactsContract.Data.MIMETYPE
+                                + " = ?";
+                        whereArgs = new String[] {
+                                contactId,
+                                ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE
+                        };
+
+                        ContentValues contentValues = new ContentValues();
+                        contentValues.put(
+                                ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME,
+                                familyName + middleName + givenName);
+
+                        contentProviderOperationList.add(ContentProviderOperation
+                                        .newUpdate(dataUri)
+                                        .withSelection(whereClause, whereArgs)
+                                        .withValues(contentValues)
+                                        .build()
+                        );
+
+                        try {
+                            getActivity().getContentResolver().applyBatch(
+                                    ContactsContract.AUTHORITY, contentProviderOperationList);
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        } catch (OperationApplicationException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                } finally {
+                    dataCursor.close();
+                }
+            }
+
+            return null;
         }
     }
 }
