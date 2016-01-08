@@ -16,6 +16,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SwitchCompat;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ReorderDisplayNameFragment extends Fragment {
+
+    private static final String TAG = "ReorderDisplayNameFragment";
 
     private RecyclerView mDisplayNameRecyclerView;
     private DisplayNameAdapter mDisplayNameAdapter;
@@ -293,6 +296,9 @@ public class ReorderDisplayNameFragment extends Fragment {
                         };
 
                         String newDisplayName = familyName + middleName + givenName;
+                        newDisplayName = newDisplayName.replace(" ", "");
+                        Log.d(TAG, "familyName = " + familyName + " middleName = " + middleName +
+                        " givenName = " + givenName + " newDisplayName = " + newDisplayName);
                         ContentValues contentValues = new ContentValues();
                         contentValues.put(
                                 ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME,
