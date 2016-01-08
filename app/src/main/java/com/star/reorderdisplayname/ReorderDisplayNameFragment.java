@@ -23,6 +23,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.CompoundButton;
+import android.widget.ProgressBar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,8 @@ public class ReorderDisplayNameFragment extends Fragment {
     private DisplayNameAdapter mDisplayNameAdapter;
 
     private SwitchCompat mSwitchCompat;
+
+    private ProgressBar mProgressBar;
 
     private Button mQueryButton;
     private Button mUpdateButton;
@@ -61,7 +64,6 @@ public class ReorderDisplayNameFragment extends Fragment {
         mDisplayNameRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         mSwitchCompat = (SwitchCompat) view.findViewById(R.id.select_reject_all_switch);
-        mSwitchCompat.setClickable(mDisplayNameAdapter != null);
         mSwitchCompat.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -79,10 +81,15 @@ public class ReorderDisplayNameFragment extends Fragment {
             }
         });
 
+        mProgressBar = (ProgressBar) view.findViewById(R.id.progressBar);
+
         mQueryButton = (Button) view.findViewById(R.id.query_button);
         mQueryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                mQueryButton.setClickable(false);
+                mUpdateButton.setClickable(true);
+                mProgressBar.setProgress(0);
                 new QueryContactsTask().execute();
             }
         });
@@ -91,9 +98,16 @@ public class ReorderDisplayNameFragment extends Fragment {
         mUpdateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                mQueryButton.setClickable(true);
+                mUpdateButton.setClickable(false);
+                mProgressBar.setMax(mCheckedDisplayNames.size());
                 new UpdateContactsTask().execute(mCheckedDisplayNames);
             }
         });
+
+        mSwitchCompat.setClickable(false);
+        mQueryButton.setClickable(true);
+        mUpdateButton.setClickable(false);
 
         return view;
     }
@@ -207,7 +221,7 @@ public class ReorderDisplayNameFragment extends Fragment {
                     String displayName = contactsCursor.getString(
                             contactsCursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
 
-                    if (displayName.contains(" ")) {
+                    if (displayName.contains(" ") || displayName.contains("　")) {
                         mQueryDisplayNames.add(displayName);
                         mQueryDisplayNamesChecked.add(false);
                     }
@@ -225,7 +239,7 @@ public class ReorderDisplayNameFragment extends Fragment {
             mDisplayNameAdapter = new DisplayNameAdapter(
                     mQueryDisplayNames, mQueryDisplayNamesChecked);
             mDisplayNameRecyclerView.setAdapter(mDisplayNameAdapter);
-            mSwitchCompat.setClickable(mDisplayNameAdapter != null);
+            mSwitchCompat.setClickable(true);
         }
     }
 
@@ -296,7 +310,8 @@ public class ReorderDisplayNameFragment extends Fragment {
                         };
 
                         String newDisplayName = familyName + middleName + givenName;
-                        newDisplayName = newDisplayName.replace(" ", "");
+                        newDisplayName = newDisplayName.replaceAll(" ", "");
+                        newDisplayName = newDisplayName.replaceAll("　", "");
                         Log.d(TAG, "familyName = " + familyName + " middleName = " + middleName +
                         " givenName = " + givenName + " newDisplayName = " + newDisplayName);
                         ContentValues contentValues = new ContentValues();
@@ -347,6 +362,8 @@ public class ReorderDisplayNameFragment extends Fragment {
 
             displayNames.set(position, newDisplayName);
             mDisplayNameAdapter.notifyItemChanged(position);
+
+            mProgressBar.incrementProgressBy(1);
         }
     }
 }
