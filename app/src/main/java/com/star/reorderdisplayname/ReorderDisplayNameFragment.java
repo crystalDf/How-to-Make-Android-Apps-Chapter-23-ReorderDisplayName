@@ -58,6 +58,7 @@ public class ReorderDisplayNameFragment extends Fragment {
         mDisplayNameRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         mSwitchCompat = (SwitchCompat) view.findViewById(R.id.select_reject_all_switch);
+        mSwitchCompat.setClickable(mDisplayNameAdapter != null);
         mSwitchCompat.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -221,6 +222,7 @@ public class ReorderDisplayNameFragment extends Fragment {
             mDisplayNameAdapter = new DisplayNameAdapter(
                     mQueryDisplayNames, mQueryDisplayNamesChecked);
             mDisplayNameRecyclerView.setAdapter(mDisplayNameAdapter);
+            mSwitchCompat.setClickable(mDisplayNameAdapter != null);
         }
     }
 
