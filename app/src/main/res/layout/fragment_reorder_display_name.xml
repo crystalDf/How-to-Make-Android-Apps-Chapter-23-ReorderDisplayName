@@ -40,10 +40,9 @@
         style="?android:attr/progressBarStyleHorizontal"/>
 
     <TextView
-        android:id="@+id/prompt_text"
+        android:id="@+id/prompt_text_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/disorderly_name"/>
+        android:layout_height="wrap_content"/>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/display_name_recycler_view"

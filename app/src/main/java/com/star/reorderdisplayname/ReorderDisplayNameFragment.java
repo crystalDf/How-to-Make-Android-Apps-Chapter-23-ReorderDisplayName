@@ -24,6 +24,8 @@ import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.CompoundButton;
 import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +43,8 @@ public class ReorderDisplayNameFragment extends Fragment {
 
     private Button mQueryButton;
     private Button mUpdateButton;
+
+    private TextView mPromptTextView;
 
     private List<String> mCheckedDisplayNames = new ArrayList<>();
 
@@ -104,6 +108,8 @@ public class ReorderDisplayNameFragment extends Fragment {
                 new UpdateContactsTask().execute(mCheckedDisplayNames);
             }
         });
+
+        mPromptTextView = (TextView) view.findViewById(R.id.prompt_text_view);
 
         mSwitchCompat.setClickable(false);
         mQueryButton.setClickable(true);
@@ -240,6 +246,10 @@ public class ReorderDisplayNameFragment extends Fragment {
                     mQueryDisplayNames, mQueryDisplayNamesChecked);
             mDisplayNameRecyclerView.setAdapter(mDisplayNameAdapter);
             mSwitchCompat.setClickable(true);
+
+            mPromptTextView.setText(mQueryDisplayNames.size() == 0
+                    ? R.string.no_disorderly_name
+                    : R.string.disorderly_name);
         }
     }
 
@@ -364,6 +374,11 @@ public class ReorderDisplayNameFragment extends Fragment {
             mDisplayNameAdapter.notifyItemChanged(position);
 
             mProgressBar.incrementProgressBy(1);
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            Toast.makeText(getActivity(), R.string.finished, Toast.LENGTH_SHORT).show();
         }
     }
 }

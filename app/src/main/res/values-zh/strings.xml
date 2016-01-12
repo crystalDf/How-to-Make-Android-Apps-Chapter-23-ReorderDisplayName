@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">联系人姓名修正工具</string>
+
+    <string name="query">查询</string>
+    <string name="update">更新</string>
+    <string name="disorderly_name">姓名乱序或含空格联系人如下</string>
+    <string name="no_disorderly_name">没有姓名乱序或含空格联系人</string>
+    <string name="finished">姓名更新完成</string>
+
+</resources>

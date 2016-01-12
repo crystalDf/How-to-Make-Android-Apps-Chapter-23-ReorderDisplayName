@@ -1,28 +1,10 @@
 <resources>
     <string name="app_name">ReorderDisplayName</string>
 
-    <string name="correct_display_name">改正</string>
-    <string name="detect_wrong_displayname">检测</string>
-    <string name="ok">确定</string>
-    <string name="cancel">取消</string>
-    <string name="select_all">全选</string>
-    <string name="select_none">全不选</string>
-    <string name="list_of_error_contacts">有错误的项目</string>
-    <string name="scanning_contacts">正在扫描通讯录</string>
-    <string name="info">信息</string>
-    <string name="process_finish">处理完成</string>
-    <string name="warnning">警告</string>
-    <string name="are_you_sure_update_contact">请问你确定要更改通讯录吗？</string>
-    <string name="about">关于</string>
-	<string name="about_app">警告！请预先备份你的通讯录，以防止程序错误导致的数据丢失！\n关于程序\n这是一个改正通讯录中显示名称的工具！在Android版本2.1（或者以下），通讯录的显示名称是按照英文习惯：名字在前，姓在后，来显示的。例如，姓张名三的人，在通信录中会显示为“三
-		张”，本工具可以扫描出这样的错误，并改正显示名称为“张三”。本工具仅更改显示名称，通讯录中原来的姓、名字段不会更改，对于没有姓名的通讯录，如某个公司，也不会更改。
-	</string>
-    <string name="activity_title_main">修正通讯录姓名颠倒小工具</string>
-    <string name="activity_title_detect">检测颠倒的姓名</string>
-    <string name="activity_title_correct">更正颠倒的姓名</string>
-
     <string name="query">Query</string>
     <string name="update">Update</string>
-    <string name="disorderly_name">Disorderly Name</string>
+    <string name="disorderly_name">Disorderly Names As Follows</string>
+    <string name="no_disorderly_name">No Disorderly Names</string>
+    <string name="finished">Finished</string>
 
 </resources>
